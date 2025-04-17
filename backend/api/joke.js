@@ -2,12 +2,19 @@ const fs = require('fs');
 const path = require('path');
 
 module.exports = (req, res) => {
-  const filePath = path.join(process.cwd(), 'joke.json');
+  const filePath = path.join(__dirname, '..', 'joke.json');
 
   if (req.method === 'GET') {
-    const jokes = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    res.status(200).json(jokes);
-  } else if (req.method === 'POST') {
+    try {
+      const jokes = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      return res.status(200).json(jokes);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: 'Failed to read jokes.' });
+    }
+  }
+
+  if (req.method === 'POST') {
     const { id, joke } = req.body;
 
     if (!joke) {
@@ -20,12 +27,12 @@ module.exports = (req, res) => {
       jokes.push({ id, joke });
 
       fs.writeFileSync(filePath, JSON.stringify(jokes, null, 2), 'utf-8');
-      res.status(201).json({ message: 'Joke added successfully!' });
+      return res.status(201).json({ message: 'Joke added successfully!' });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ message: 'Failed to add joke.' });
+      return res.status(500).json({ message: 'Failed to add joke.' });
     }
-  } else {
-    res.status(405).json({ message: 'Method Not Allowed' });
   }
+
+  return res.status(405).json({ message: 'Method Not Allowed' });
 };
